@@ -14,3 +14,8 @@ This is my solution to keep those commands running without maintaining a connect
   - A manager to runs command and monitor their status.
   - A command registrator to tell the manager what to run.
 
+## Refs
+
+- https://doc.rust-lang.org/std/process/struct.Command.html
+- https://docs.rs/tokio/latest/tokio/process/struct.Command.html
+- https://www.shubhamdipt.com/blog/how-to-create-a-systemd-service-in-linux/
