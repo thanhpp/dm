@@ -6,7 +6,7 @@ use tokio::{
     process::Command,
 };
 
-struct Executor {
+pub struct Executor {
     command: String,
     args: Vec<String>,
     stdout_path: String,
@@ -32,7 +32,8 @@ impl Executor {
         let output = Command::new(&self.command)
             .args(&self.args)
             .output()
-            .await?;
+            .await
+            .map_err(|err| anyhow::format_err!("execute command error: {:?}", err))?;
 
         self.write_log(&self.stdout_path, &output.stdout).await?;
         self.write_log(&self.stderr_path, &output.stderr).await?;
@@ -52,7 +53,9 @@ impl Executor {
         };
         if !file_exist {
             if let Some(parent) = p.parent() {
-                fs::create_dir_all(parent).await?;
+                fs::create_dir_all(parent)
+                    .await
+                    .map_err(|err| anyhow::format_err!("create dir all error: {:?}", err))?;
             }
         }
 
@@ -60,9 +63,14 @@ impl Executor {
             .append(true)
             .create(true)
             .open(log_path)
-            .await?;
-        f.write_all(data).await?;
-        f.sync_all().await?;
+            .await
+            .map_err(|err| anyhow::format_err!("open options error {:?}", err))?;
+        f.write_all(data)
+            .await
+            .map_err(|err| anyhow::format_err!("write all error: {:?}", err))?;
+        f.sync_all()
+            .await
+            .map_err(|err| anyhow::format_err!("sync all error: {:?}", err))?;
 
         Ok(())
     }
