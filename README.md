@@ -14,6 +14,36 @@ This is my solution to keep those commands running without maintaining a connect
   - A manager to runs command and monitor their status.
   - A command registrator to tell the manager what to run.
 
+## Register a linux service
+
+> https://wiki.debian.org/systemd/Services
+
+- Create your service's unit file with the ".service" suffix in the /etc/systemd/system directory
+- type: Simple - running in the foreground
+- Restart=always
+- Environment
+  - WorkingDirectory
+  - RootDirectory
+  - User
+  - Group
+- dependencies
+  - After= (services that must be started before ours) 
+- Example
+  - ```
+    # Contents of /etc/systemd/system/myservice.service
+    [Unit]
+    Description=My Service
+    After=network.target
+
+    [Service]
+    Type=simple
+    Restart=always
+    ExecStart=/usr/local/bin/myservice
+
+    [Install]
+    WantedBy=multi-user.target
+    ```
+
 ## Refs
 
 - https://doc.rust-lang.org/std/process/struct.Command.html

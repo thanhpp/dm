@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, time::Duration};
 
 use serde::Deserialize;
 
@@ -7,12 +7,10 @@ mod executor;
 #[tokio::main]
 async fn main() {
     let m = Manager::new("requests");
-    let req = m.read_request().unwrap();
-    for r in req.iter() {
-        m.execute(r).await;
-    }
+    m.run().await;
 }
 
+#[derive(Clone)]
 struct Manager {
     request_folder: String,
 }
@@ -22,6 +20,39 @@ impl Manager {
         Manager {
             request_folder: folder.to_string(),
         }
+    }
+
+    async fn run(&self) {
+        let m = self.clone();
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(Duration::from_secs(1));
+
+            loop {
+                interval.tick().await;
+
+                let reqs = match m.read_request() {
+                    Err(err) => {
+                        println!("read request error: {:?}", err);
+                        continue;
+                    }
+                    Ok(r) => r,
+                };
+
+                let mut futures = Vec::new();
+                for r in reqs {
+                    let a_request = r;
+                    futures.push(tokio::spawn(async move {
+                        Self::execute(&a_request).await;
+                    }))
+                }
+
+                for f in futures {
+                    f.await.unwrap();
+                }
+            }
+        })
+        .await
+        .unwrap();
     }
 
     fn read_request(&self) -> anyhow::Result<Vec<Request>> {
@@ -65,15 +96,42 @@ impl Manager {
         Ok(requests)
     }
 
-    async fn execute(&self, req: &Request) {
+    async fn execute(req: &Request) {
+        let request_path = std::path::Path::new(&req.file_name);
+        let output_path = std::path::Path::new(&req.log_file);
+        let output_file = match output_path.file_name() {
+            None => req.log_file.clone(),
+            Some(f_name) => match f_name.to_str() {
+                None => req.log_file.clone(),
+                Some(f_name) => {
+                    format!(
+                        "{}/{}-{}",
+                        req.log_file.clone().trim_end_matches(f_name),
+                        request_path
+                            .file_name()
+                            .unwrap_or_default()
+                            .to_str()
+                            .unwrap_or_default()
+                            .trim_end_matches(".yaml"),
+                        f_name,
+                    )
+                }
+            },
+        };
+
         let e = executor::Executor::new(
             req.command.clone(),
             req.args.clone(),
-            req.log_file.clone(),
-            req.log_file.clone(),
+            output_file.clone(),
+            output_file,
         );
 
-        e.run().await.unwrap();
+        if let Err(err) = e.run().await {
+            println!("execute error {:?}", err)
+        };
+        if let Err(err) = fs::remove_file(&req.file_name) {
+            println!("remove file error {:?}", err)
+        };
     }
 }
 
