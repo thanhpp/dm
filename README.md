@@ -44,6 +44,12 @@ This is my solution to keep those commands running without maintaining a connect
     WantedBy=multi-user.target
     ```
 
+## Multiple executable
+
+> https://stackoverflow.com/questions/36604010/how-can-i-build-multiple-binaries-with-cargo
+
+- using [[bin]]
+
 ## Refs
 
 - https://doc.rust-lang.org/std/process/struct.Command.html

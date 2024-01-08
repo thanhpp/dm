@@ -10,3 +10,7 @@ anyhow = "1.0.75"
 serde = { version = "1.0.193", features = ["derive"] }
 serde_yaml = "0.9.29"
 tokio = { version = "1.32.0", features = ["full"] }
+
+[[bin]]
+name = "client"
+path = "src/client/bin/main.rs"
