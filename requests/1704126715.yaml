@@ -1,4 +1,0 @@
-command: go
-args:
-  - env
-log_file: output/output.log

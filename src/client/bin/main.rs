@@ -2,7 +2,9 @@
 
 use std::{
     env, fs,
+    io::Write,
     os::unix::fs::{MetadataExt, PermissionsExt},
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 fn main() {
@@ -36,7 +38,26 @@ fn main() {
 
     let args_parsed: Vec<String> = std::env::args().skip(2).collect();
 
-    println!("{:?}\n{:?}", exec_file, args_parsed)
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis();
+    let command_file = format!("./requests/{}-{}.yaml", &exec_file, &now);
+    let out_file = format!("./output/{}-{}.log", &exec_file, &now);
+
+    let req = types::Request {
+        file_name: "".to_string(),
+        command: exec_file,
+        args: args_parsed,
+        log_file: out_file,
+    };
+
+    let data_yaml = serde_yaml::to_string(&req).unwrap();
+
+    let mut f = fs::File::create(command_file).unwrap();
+    f.write_all(data_yaml.as_bytes()).unwrap();
+
+    println!("{:?}", req);
 }
 
 // is_program_in_path: https://stackoverflow.com/questions/35045996/check-if-a-command-is-in-path-executable-as-process

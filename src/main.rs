@@ -1,6 +1,6 @@
 use std::{fs, time::Duration};
 
-use serde::Deserialize;
+use types::Request;
 
 mod executor;
 
@@ -133,13 +133,4 @@ impl Manager {
             println!("remove file error {:?}", err)
         };
     }
-}
-
-#[derive(Deserialize, Debug)]
-struct Request {
-    #[serde(skip)]
-    file_name: String,
-    command: String,
-    args: Vec<String>,
-    log_file: String,
 }
